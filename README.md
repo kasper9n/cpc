@@ -170,12 +170,10 @@ match string {
 - Unit types
   - Timezones
   - Binary/octal/decimal/hexadecimal/base32/base64
-  - Fuel consumption
   - Color codes
   - Force
   - Roman numerals
   - Angles
-  - Flow rate
 
 ### Releasing a new version
 
