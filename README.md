@@ -21,7 +21,7 @@ Install using `cargo`:
 cargo install cpc
 ```
 
-To install it manually, grab the appropriate binary from the [GitHub Releases page](https://github.com/probablykasper/cpc/releases) and place it wherever you normally place binaries on your OS.
+To install it manually, grab the appropriate binary from the [GitHub Releases page](https://github.com/kasper9n/cpc/releases) and place it wherever you normally place binaries on your OS.
 
 ## CLI Usage
 ```

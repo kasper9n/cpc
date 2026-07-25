@@ -72,7 +72,7 @@
 				</button>
 			{/if}
 			<a
-				href="https://github.com/probablykasper/cpc"
+				href="https://github.com/kasper9n/cpc"
 				aria-label="GitHub repository"
 				class="svelte-1ugh5mt"
 			>
