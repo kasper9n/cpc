@@ -3,6 +3,7 @@
 	import { flip } from "svelte/animate";
 	import { fly } from "svelte/transition";
 	import { PersistedState } from "runed";
+    import { tick } from "svelte";
 
 	// Has to be dynamically imported for prerendering to work
 	// https://github.com/sveltejs/svelte/issues/13155
@@ -102,9 +103,8 @@
 		bind:value={input}
 		onkeydown={async (e) => {
 			const input_el = e.currentTarget;
-			const input = e.currentTarget.value;
 			if (check_shortcut(e, "Enter")) {
-				const out = wasm_eval(input);
+				const out = wasm_eval();
 				console.log(out);
 				calc_history.current.push({
 					id: Date.now(),
