@@ -28,6 +28,13 @@ To install it manually, grab the appropriate binary from the [GitHub Releases pa
 cpc '2h/3 to min'
 ```
 
+## CLI REPL Usage
+```
+cpc
+> sin(1)
+≈ 0.84147098480789650665250232163029899962
+```
+
 ## Examples
 ```
 3 + 4 * 2
