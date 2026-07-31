@@ -301,9 +301,6 @@ pub enum FunctionIdentifier {
 pub enum LexerKeyword {
 	PercentChar,
 	In,
-	DoubleQuotes,
-	Mercury,
-	Hg,
 	PoundForce,
 	Force,
 	Revolution,

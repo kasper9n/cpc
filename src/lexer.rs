@@ -163,7 +163,17 @@ fn lex_token(lexer: &mut Lexer) -> Result<(), String> {
 		}
 		"π" => Token::Constant(Pi),
 		"'" => Token::unit(Foot),
-		"\"" | "“" | "”" | "″" => Token::LexerKeyword(DoubleQuotes),
+		"\"" | "“" | "”" | "″" => {
+			lexer.graphemes.next();
+			match read_word(lexer).as_str() {
+				"hg" | "mercury" => Token::unit(InchOfMercury),
+				other => {
+					lexer.tokens.push(Token::unit(Inch));
+					lex_word_if_non_empty(other, lexer)?;
+					return Ok(());
+				}
+			}
+		}
 		grapheme => {
 			return Err(format!("Invalid character: {}", grapheme));
 		}
@@ -243,7 +253,6 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"tan" => Token::FunctionIdentifier(Tan),
 
 		"per" => Token::TextOperator(Per),
-		"hg" => Token::LexerKeyword(Hg), // can be hectogram or mercury
 
 		"ns" | "nanosec" | "nanosecs" | "nanosecond" | "nanoseconds" => Token::unit(Nanosecond),
 		// µ and μ are two different characters
@@ -405,7 +414,8 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 
 		"mg" | "milligram" | "milligrams" => Token::unit(Milligram),
 		"g" | "gram" | "grams" => Token::unit(Gram),
-		"hectogram" | "hectograms" => Token::unit(Hectogram),
+		// note: "hg (inches of mercury) is parsed earlier
+		"hg" | "hectogram" | "hectograms" => Token::unit(Hectogram),
 		"kg" | "kilo" | "kilos" | "kilogram" | "kilograms" => Token::unit(Kilogram),
 		"t" | "tonne" | "tonnes" => Token::unit(MetricTon),
 		"oz" | "ounces" => Token::unit(Ounce),
@@ -638,7 +648,6 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"mbar" | "mbars" | "millibar" | "millibars" => Token::unit(Millibar),
 		"bar" | "bars" => Token::unit(Bar),
 		"inhg" => Token::unit(InchOfMercury),
-		"mercury" => Token::LexerKeyword(Mercury),
 		"psi" => Token::unit(PoundsPerSquareInch),
 		"torr" | "torrs" => Token::unit(Torr),
 
@@ -857,24 +866,6 @@ pub fn lex(input: &str, remove_trailing_operator: bool) -> Result<Vec<Token>, St
 						tokens[token_index] = Token::Operator(Modulo);
 					}
 				}
-			}
-			// decide if " is 'inch' or 'inch of mercury'
-			Token::LexerKeyword(DoubleQuotes) => {
-				match tokens.get(token_index + 1) {
-					Some(Token::LexerKeyword(Hg)) => {
-						// "hg should be inch of mercury
-						tokens[token_index] = Token::unit(InchOfMercury);
-						tokens.remove(token_index + 1);
-					}
-					_ => {
-						// otherwise, Inch
-						tokens[token_index] = Token::unit(Inch);
-					}
-				}
-			}
-			// if hg wasn't already turned into inch of mercury, it's hectogram
-			Token::LexerKeyword(Hg) => {
-				tokens[token_index] = Token::unit(Hectogram);
 			}
 			// decide if "in" is Inch or To
 			Token::LexerKeyword(In) => {
