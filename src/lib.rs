@@ -148,9 +148,10 @@ impl Display for Number {
 			true => "≈ ",
 			false => "",
 		};
+		let formatted_value = add_thousands_separator(&value.to_string());
 		let output = match word.as_str() {
-			"" => format!("{approx_str}{value}"),
-			_ => format!("{approx_str}{value} {word}"),
+			"" => format!("{approx_str}{formatted_value}"),
+			_ => format!("{approx_str}{formatted_value} {word}"),
 		};
 		write!(f, "{output}")
 	}
@@ -174,6 +175,35 @@ impl PartialEq for Number {
 	fn eq(&self, other: &Self) -> bool {
 		self.value == other.value && self.primitive_unit() == other.primitive_unit()
 	}
+}
+
+fn add_thousands_separator(s: &str) -> String {
+	let (sign, s) = match s.strip_prefix('-') {
+		Some(rest) => ("-", rest),
+		None => ("", s),
+	};
+	let (int_part, rest) = s.split_once('.').map_or((s, ""), |(i, f)| (i, f));
+	let len = int_part.len();
+	let mut result = sign.to_string();
+	for (i, c) in int_part.chars().enumerate() {
+		if i > 0 && (len - i) % 3 == 0 {
+			result.push(' ');
+		}
+		result.push(c);
+	}
+	if !rest.is_empty() {
+		result.push('.');
+		result.push_str(rest);
+	}
+	result
+}
+
+#[test]
+fn test_thousands_separator() {
+	assert_eq!(add_thousands_separator("-100000000"), "-100 000 000");
+	assert_eq!(add_thousands_separator("1000"), "1 000");
+	assert_eq!(add_thousands_separator("100"), "100");
+	assert_eq!(add_thousands_separator("-1000"), "-1 000");
 }
 
 #[derive(Clone, Debug, PartialEq)]

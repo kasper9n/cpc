@@ -380,7 +380,7 @@ mod tests {
 		eval_test("-2(-3)", "6");
 		eval_test("-2(3)", "-6");
 		eval_test("(3)-2", "1");
-		eval_test("-1km to m", "-1000 meters");
+		eval_test("-1km to m", "-1 000 meters");
 		eval_test("2*-3*0.5", "-3");
 		eval_test("-3^2", "-9");
 		eval_test("e^2", "≈ 7.3890560989306502272304274605750078132");

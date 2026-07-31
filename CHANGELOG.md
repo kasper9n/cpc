@@ -1,5 +1,8 @@
 # Changelog
 
+## Next
+- Format numbers with thousands separator
+
 ## 4.2.0 - 2026 Jul 1
 - Add ambiguous unit resolution depending on context and user locale.
 - Add ambiguous units like `pound`, `deg`, `$` and `kr`
