@@ -37,6 +37,8 @@ pub enum UnitType {
 	/// A unit of voltage, for example [`Volt`]
 	Voltage,
 	/// A unit of pressure, for example [`Bar`]
+	Force,
+	/// A unit of force, for example [`Hertz`]
 	Pressure,
 	/// A unit of frequency, for example [`Hertz`]
 	Frequency,
@@ -65,6 +67,7 @@ impl UnitType {
 			ElectricCurrent => vec![(Ampere, 1)],
 			Resistance => vec![(Meter, 2), (Kilogram, 1), (Second, -3), (Ampere, -2)],
 			Voltage => vec![(Meter, 2), (Kilogram, 1), (Second, -3), (Ampere, -1)],
+			Force => vec![(Meter, 1), (Kilogram, 1), (Second, -2)],
 			Pressure => vec![(Kilogram, 1), (Second, -2), (Meter, -1)],
 			Frequency => vec![(Second, -1)],
 			Speed => vec![(Meter, 1), (Second, -1)],
@@ -406,6 +409,13 @@ create_units!(
 	Millivolt:                    (Voltage, d!(0.001), "millivolt", "millivolts"),
 	Volt:                         (Voltage, d!(1), "volt", "volts"),
 	Kilovolt:                     (Voltage, d!(1000), "kilovolt", "kilovolts"),
+
+	Millinewton:                  (Force, d!(0.001), "millinewton", "millinewtons"),
+	Newton:                       (Force, d!(1), "newton", "newtons"),
+	Kilonewton:                   (Force, d!(1000), "kilonewton", "kilonewtons"),
+	Meganewton:                   (Force, d!(1000000), "meganewton", "meganewtons"),
+	Dyne:                         (Force, d!(0.00001), "dyne", "dynes"),
+	PoundForce:                   (Force, d!(4.4482216152605), "pound-force", "pound-force"),
 
 	Pascal:                       (Pressure, d!(1), "pascal", "pascals"),
 	Kilopascal:                   (Pressure, d!(1000), "kilopascal", "kilopascals"),
@@ -1406,6 +1416,12 @@ mod tests {
 
 		assert_float_eq!(convert_test(1000.0, Millivolt, Volt), 1.0);
 		assert_float_eq!(convert_test(1000.0, Volt, Kilovolt), 1.0);
+
+		assert_float_eq!(convert_test(1000.0, Millinewton, Newton), 1.0);
+		assert_float_eq!(convert_test(1000.0, Newton, Kilonewton), 1.0);
+		assert_float_eq!(convert_test(1000.0, Kilonewton, Meganewton), 1.0);
+		assert_float_eq!(convert_test(100000.0, Dyne, Newton), 1.0);
+		assert_float_eq!(convert_test(4.4482216152605, Newton, PoundForce), 1.0);
 
 		assert_float_eq!(convert_test(1000.0, Pascal, Kilopascal), 1.0);
 		assert_float_eq!(convert_test(101325.0, Pascal, Atmosphere), 1.0);

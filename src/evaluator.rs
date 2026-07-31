@@ -480,6 +480,13 @@ mod tests {
 		results_eq("1000 mA to A", "1 A");
 		results_eq("1000 mΩ to Ω", "1 Ω");
 		results_eq("1000 mV to V", "1 V");
+		results_eq("1000 millinewtons to newtons", "1 N");
+		results_eq("1000 n to kilonewtons", "1 kN");
+		results_eq("1 kilonewton to newtons", "1000 N");
+		results_eq("1 meganewton to newtons", "1000000 N");
+		results_eq("1 newton to dynes", "100000 dyne");
+		eval_test("4.4482216152605 newtons to lbf", "1 pound-force");
+		eval_test("1 lbf to newtons", "4.4482216152605 newtons");
 		results_eq("1 bar to Pa", "100000 Pa");
 		results_eq("1 kHz to Hz", "1000 Hz");
 		eval_test(

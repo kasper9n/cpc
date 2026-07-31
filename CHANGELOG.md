@@ -1,6 +1,8 @@
 # Changelog
 
 ## Next
+- Add units of force
+- Parse `kN` as `kilonewton` instead of `knot` if the N is uppercase
 - Add REPL to the `cpc` CLI
 - Add support for numbers with thousands separators `_`, ` ` and ` ` (thin space)
 - Format numbers with thousands separator

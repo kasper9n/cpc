@@ -422,7 +422,7 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"lb" | "lbs" => Token::unit(Pound),
 		"pound" | "pounds" => match read_immediate_grapheme("-", lexer) {
 			true => match lexer.read_immediate_word().as_str() {
-				"force" => Token::LexerKeyword(PoundForce),
+				"force" => Token::unit(PoundForce),
 				other => {
 					lexer.tokens.push(Token::unit(Pound));
 					lexer.tokens.push(Token::Operator(Minus));
@@ -533,16 +533,6 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"millijoule" | "millijoules" => Token::unit(Millijoule),
 		"j" | "joule" | "joules" => Token::unit(Joule),
 		"nm" => Token::unit(NewtonMeter),
-		"newton" => match read_immediate_grapheme("-", lexer) {
-			true => match lexer.read_immediate_word().as_str() {
-				"meter" | "meters" | "metre" | "metres" => Token::unit(NewtonMeter),
-				string => return Err(format!("Invalid string: {}", string)),
-			},
-			false => match lexer.read_word().as_str() {
-				"meter" | "meters" | "metre" | "metres" => Token::unit(NewtonMeter),
-				string => return Err(format!("Invalid string: {}", string)),
-			},
-		},
 		"kj" | "kilojoule" | "kilojoules" => Token::unit(Kilojoule),
 		"mj" | "megajoule" | "megajoules" => Token::unit(Megajoule),
 		"gj" | "gigajoule" | "gigajoules" => Token::unit(Gigajoule),
@@ -638,9 +628,32 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"v" | "volt" | "volts" => Token::unit(Volt),
 		"kv" | "kilovolt" | "kilovolts" => Token::unit(Kilovolt),
 
-		// for pound-force per square inch
-		"lbf" => Token::LexerKeyword(PoundForce),
-		"force" => Token::LexerKeyword(Force),
+		"mn" | "millinewton" | "millinewtons" => Token::unit(Millinewton),
+		"n" | "newtons" => Token::unit(Newton),
+		"newton" => match read_immediate_grapheme("-", lexer) {
+			true => match lexer.read_immediate_word().as_str() {
+				"meter" | "meters" | "metre" | "metres" => Token::unit(NewtonMeter),
+				other => {
+					lexer.tokens.push(Token::unit(Newton));
+					lexer.tokens.push(Token::Operator(Minus));
+					lex_word_if_non_empty(other, lexer)?;
+					return Ok(());
+				}
+			},
+			false => match lexer.read_word().as_str() {
+				"meter" | "meters" | "metre" | "metres" => Token::unit(NewtonMeter),
+				other => {
+					lexer.tokens.push(Token::unit(Newton));
+					lex_word_if_non_empty(other, lexer)?;
+					return Ok(());
+				}
+			},
+		},
+		"kn" if word.as_bytes()[1] == b'N' => Token::unit(Kilonewton),
+		"kilonewton" | "kilonewtons" => Token::unit(Kilonewton),
+		"meganewton" | "meganewtons" => Token::unit(Meganewton),
+		"dyn" | "dyne" | "dynes" => Token::unit(Dyne),
+		"lbf" => Token::unit(PoundForce),
 
 		"pa" | "pascal" | "pascals" => Token::unit(Pascal),
 		"kpa" | "kilopascal" | "kilopascals" => Token::unit(Kilopascal),
@@ -1181,7 +1194,7 @@ mod tests {
 		);
 		run_lex(
 			"210 pounds-force",
-			vec![numtok!(210), Token::LexerKeyword(PoundForce)],
+			vec![numtok!(210), Token::unit(PoundForce)],
 			&strip_operator_spacing,
 			&strip_afterdigit_spacing,
 		);
@@ -2789,7 +2802,7 @@ mod tests {
 		);
 		run_lex(
 			"20 lbf",
-			vec![numtok!(20), Token::LexerKeyword(PoundForce)],
+			vec![numtok!(20), Token::unit(PoundForce)],
 			&strip_operator_spacing,
 			&strip_afterdigit_spacing,
 		);
