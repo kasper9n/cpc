@@ -165,14 +165,8 @@ fn lex_token(lexer: &mut Lexer) -> Result<(), String> {
 		"'" => Token::unit(Foot),
 		"\"" | "“" | "”" | "″" => {
 			lexer.graphemes.next();
-			match read_word(lexer).as_str() {
-				"hg" | "mercury" => Token::unit(InchOfMercury),
-				other => {
-					lexer.tokens.push(Token::unit(Inch));
-					lex_word_if_non_empty(other, lexer)?;
-					return Ok(());
-				}
-			}
+			lex_word(first_grapheme, lexer)?;
+			return Ok(());
 		}
 		grapheme => {
 			return Err(format!("Invalid character: {}", grapheme));
@@ -283,8 +277,29 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"dm" | "decimeter" | "decimeters" | "decimetre" | "decimetres" => Token::unit(Decimeter),
 		"m" | "meter" | "meters" | "metre" | "metres" => Token::unit(Meter),
 		"km" | "kilometer" | "kilometers" | "kilometre" | "kilometres" => Token::unit(Kilometer),
-		"in" => Token::LexerKeyword(In),
-		"inch" | "inches" => Token::unit(Inch),
+		"\"" | "“" | "”" | "″" | "in" | "inch" | "inches" => {
+			match read_word(lexer).as_str() {
+				"of" => match read_word(lexer).as_str() {
+					"hg" | "mercury" => Token::unit(InchOfMercury),
+					other => {
+						lexer.tokens.push(Token::unit(Inch));
+						lexer.tokens.push(Token::TextOperator(Of));
+						lex_word_if_non_empty(other, lexer)?;
+						return Ok(());
+					}
+				},
+				"hg" if matches!(word, "\"" | "“" | "”" | "″") => Token::unit(InchOfMercury),
+				other => {
+					if word.to_ascii_lowercase() == "in" {
+						lexer.tokens.push(Token::LexerKeyword(In));
+					} else {
+						lexer.tokens.push(Token::unit(Inch));
+					}
+					lex_word_if_non_empty(other, lexer)?;
+					return Ok(());
+				}
+			}
+		}
 		"ft" | "foot" | "feet" => Token::unit(Foot),
 		"yd" | "yard" | "yards" => Token::unit(Yard),
 		"mi" | "mile" | "miles" => Token::unit(Mile),
@@ -877,19 +892,6 @@ pub fn lex(input: &str, remove_trailing_operator: bool) -> Result<Vec<Token>, St
 						// everything else should be modulo, for example if the % is
 						// before a number, function or constants
 						tokens[token_index] = Token::Operator(Modulo);
-					}
-				}
-			}
-			// decide if "in" is Inch or To
-			Token::LexerKeyword(In) => {
-				match tokens.get(token_index + 1) {
-					Some(Token::Unit(_)) => {
-						// "in" should be To
-						tokens[token_index] = Token::TextOperator(To);
-					}
-					_ => {
-						// otherwise, Inch
-						tokens[token_index] = Token::unit(Inch);
 					}
 				}
 			}

@@ -6,6 +6,7 @@
 - Add REPL to the `cpc` CLI
 - Add support for numbers with thousands separators `_`, ` ` and ` ` (thin space)
 - Format numbers with thousands separator
+- Fix parsing of `inch of mercury`
 
 ## 4.2.0 - 2026 Jul 1
 - Add ambiguous unit resolution depending on context and user locale.

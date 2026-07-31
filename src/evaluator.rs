@@ -489,6 +489,10 @@ mod tests {
 		eval_test("1 lbf to newtons", "4.4482216152605 newtons");
 		results_eq("1 bar to Pa", "100000 Pa");
 		results_eq("1 kHz to Hz", "1000 Hz");
+		results_eq("1 in of mercury", "1 inch of mercury");
+		results_eq("1 \" of mercury", "1 inch of mercury");
+		results_eq("1 \" of hg", "1 inch of mercury");
+		results_eq("1\"hg", "1 inch of mercury");
 		eval_test(
 			"1 km/h to m/s",
 			"≈ 0.277777777777777777777777777777777777778 meters / second",
