@@ -1,5 +1,6 @@
 use cpc::eval;
 use std::env;
+use std::io::{self, BufRead, Write};
 use std::process::exit;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,6 +20,45 @@ fn get_args() -> env::Args {
 	let mut args = env::args();
 	args.next(); // skip binary name
 	args
+}
+
+/// Interactive REPL, used when no expression argument is passed
+fn repl(verbose: bool) {
+	let stdin = io::stdin();
+	let mut stdout = io::stdout();
+
+	loop {
+		print!("> ");
+		if stdout.flush().is_err() {
+			break;
+		}
+
+		let mut line = String::new();
+		match stdin.lock().read_line(&mut line) {
+			Ok(0) => break, // EOF (e.g. Ctrl-D)
+			Ok(_) => {}
+			Err(_) => break,
+		}
+
+		let expression = line.trim();
+		if expression.is_empty() {
+			continue;
+		}
+
+		match eval(expression, true, verbose) {
+			Ok(answer) => {
+				if !verbose {
+					println!("{answer}");
+				}
+			}
+			Err(e) => {
+				eprintln!("{e}");
+			}
+		}
+		if stdout.flush().is_err() {
+			break;
+		}
+	}
 }
 
 /// CLI interface
@@ -55,7 +95,7 @@ fn main() {
 	let expression = match expression_opt {
 		Some(expression) => expression,
 		None => {
-			print_help();
+			repl(verbose);
 			exit(0);
 		}
 	};
