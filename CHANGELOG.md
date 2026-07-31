@@ -1,6 +1,7 @@
 # Changelog
 
 ## Next
+- Add support for numbers with thousands separators `_`, ` ` and ` ` (thin space)
 - Format numbers with thousands separator
 
 ## 4.2.0 - 2026 Jul 1

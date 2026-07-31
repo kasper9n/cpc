@@ -98,7 +98,7 @@ fn read_word(lexer: &mut Lexer) -> String {
 }
 
 fn lex_token(lexer: &mut Lexer) -> Result<(), String> {
-	let (start_i, first_grapheme) = match lexer.graphemes.peek() {
+	let (_, first_grapheme) = match lexer.graphemes.peek() {
 		Some(c) => *c,
 		None => return Ok(()),
 	};
@@ -112,17 +112,31 @@ fn lex_token(lexer: &mut Lexer) -> Result<(), String> {
 			return Ok(());
 		}
 		grapheme if is_numeric_str(grapheme) => {
-			let mut end_i = start_i + grapheme.len();
+			let mut number_string = String::new();
+			number_string.push_str(grapheme);
 			lexer.graphemes.next();
-			while let Some((_, grapheme)) = lexer.graphemes.peek() {
-				if is_numeric_str(grapheme) {
-					end_i += grapheme.len();
-					lexer.graphemes.next();
-				} else {
-					break;
+
+			loop {
+				match lexer.graphemes.peek() {
+					Some((_, g)) if is_numeric_str(g) => {
+						number_string.push_str(g);
+						lexer.graphemes.next();
+					}
+					Some((_, g)) if *g == "_" || *g == " " || *g == " " => {
+						// Only treat as a thousands separator if a digit follows.
+						let mut lookahead = lexer.graphemes.clone();
+						lookahead.next();
+						match lookahead.peek() {
+							Some((_, next)) if is_numeric_str(next) => {
+								lexer.graphemes.next(); // consume separator, don't keep it
+							}
+							_ => break,
+						}
+					}
+					_ => break,
 				}
 			}
-			let number_string = &lexer.input[start_i..end_i];
+
 			let token = match D128::from_str(&number_string, Context::default()) {
 				Ok(number) => Token::Number(number),
 				Err(_e) => {
@@ -747,7 +761,6 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 struct Lexer<'a> {
 	left_paren_count: u16,
 	right_paren_count: u16,
-	input: &'a str,
 	graphemes: Peekable<GraphemeIndices<'a>>,
 	tokens: Vec<Token>,
 }
@@ -779,7 +792,6 @@ pub fn lex(input: &str, remove_trailing_operator: bool) -> Result<Vec<Token>, St
 	let mut lexer = Lexer {
 		left_paren_count: 0,
 		right_paren_count: 0,
-		input: &input,
 		graphemes: UnicodeSegmentation::grapheme_indices(input.as_str(), true).peekable(),
 		tokens: Vec::new(),
 	};
