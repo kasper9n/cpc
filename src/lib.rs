@@ -91,7 +91,9 @@ impl Number {
 	pub fn contains_category(&self, category: UnitType) -> bool {
 		self.unit.iter().any(|(u, _)| u.category() == category)
 	}
-	fn get_unit_string(&self, plural: bool) -> String {
+	/// Always returns positive exponents, like `second^2` because we print
+	/// `1 meter / second^2` rather than `1 meter * second^2`
+	fn get_unit_string_abs_exponent(&self, plural: bool) -> String {
 		let mut s = String::new();
 		let mut units = self.unit.clone();
 		sort_units(&mut units);
@@ -111,7 +113,7 @@ impl Number {
 			};
 			if unit.1.abs() >= 2 {
 				s.push_str("^");
-				s.push_str(&unit.1.to_string());
+				s.push_str(&unit.1.abs().to_string());
 			}
 		}
 		for unit in units {
@@ -125,16 +127,16 @@ impl Number {
 			s.push_str(unit.0.singular());
 			if unit.1.abs() >= 2 {
 				s.push_str("^");
-				s.push_str(&unit.1.to_string());
+				s.push_str(&unit.1.abs().to_string());
 			}
 		}
 		s
 	}
 	pub fn singular(&self) -> String {
-		self.get_unit_string(false)
+		self.get_unit_string_abs_exponent(false)
 	}
 	pub fn plural(&self) -> String {
-		self.get_unit_string(true)
+		self.get_unit_string_abs_exponent(true)
 	}
 }
 impl Display for Number {

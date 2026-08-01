@@ -6,6 +6,7 @@
 - Add REPL to the `cpc` CLI
 - Add support for numbers with thousands separators `_`, ` ` and ` ` (thin space)
 - Format numbers with thousands separator
+- Fix units incorrectly being displayed with a negative exponent, like `1 meter / second^-2`
 - Fix parsing of `inch of mercury`
 
 ## 4.2.0 - 2026 Jul 1
