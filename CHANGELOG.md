@@ -1,6 +1,6 @@
 # Changelog
 
-## Next
+## 4.3.0 - 2026 Aug 2
 - Add units of force, like `newton`
 - Add units of angle, like `revolution`. `degree` still defaults to temperature, but it works in angle contexts, like `degree to revolution`
 - Parse `kN` as `kilonewton` instead of `knot` if the N is uppercase
