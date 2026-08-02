@@ -709,8 +709,8 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 			}
 			other => {
 				let candidates = match get_region().as_str() {
-					"BS" | "BZ" | "KY" | "PR" | "PW" | "US" => &[Fahrenheit, Degree],
-					_ => &[Celsius, Degree],
+					"BS" | "BZ" | "KY" | "PR" | "PW" | "US" => &[Degree, Fahrenheit],
+					_ => &[Degree, Celsius],
 				};
 				let unit = Ambiguity(Ambiguity {
 					string: "degree",
