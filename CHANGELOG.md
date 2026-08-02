@@ -1,6 +1,6 @@
 # Changelog
 
-## Next
+## 5.0.0 - 2026 Aug 2
 - Default `degree` to angle instead of temperature
 
 ## 4.3.0 - 2026 Aug 2
