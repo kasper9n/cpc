@@ -679,6 +679,14 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"psi" => Token::unit(PoundsPerSquareInch),
 		"torr" | "torrs" => Token::unit(Torr),
 
+		"arcmin" | "arcminute" | "arcminutes" => Token::unit(Arcminute),
+		"arcsec" | "arcsecond" | "arcseconds" => Token::unit(Arcsecond),
+		"grad" | "gon" | "gradians" | "gons" => Token::unit(Gradian),
+		"rad" | "radian" | "radians" => Token::unit(Radian),
+		"mrad" | "milliradian" | "milliradians" => Token::unit(Milliradian),
+		"turn" | "turns" => Token::unit(Turn),
+		"r" | "rev" | "revolution" | "revolutions" => Token::unit(Revolution),
+
 		"hz" | "hertz" => Token::unit(Hertz),
 		"khz" | "kilohertz" => Token::unit(Kilohertz),
 		"mhz" | "megahertz" => Token::unit(Megahertz),
@@ -686,7 +694,6 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 		"thz" | "terahertz" => Token::unit(Terahertz),
 		"phz" | "petahertz" => Token::unit(Petahertz),
 		"rpm" => Token::unit(RevolutionsPerMinute),
-		"r" | "rev" | "revolution" | "revolutions" => Token::LexerKeyword(Revolution),
 
 		"kph" | "kmh" => Token::unit(KilometersPerHour),
 		"mps" => Token::unit(MetersPerSecond),
@@ -701,11 +708,16 @@ fn lex_word(word: &str, lexer: &mut Lexer) -> Result<(), String> {
 				Token::unit(Fahrenheit)
 			}
 			other => {
-				let token = match get_region().as_str() {
-					"BS" | "BZ" | "KY" | "PR" | "PW" | "US" => Fahrenheit,
-					_ => Celsius,
+				let candidates = match get_region().as_str() {
+					"BS" | "BZ" | "KY" | "PR" | "PW" | "US" => &[Fahrenheit, Degree],
+					_ => &[Celsius, Degree],
 				};
-				lexer.tokens.push(Token::unit(token));
+				let unit = Ambiguity(Ambiguity {
+					string: "degree",
+					candidates,
+					fallback: &candidates[0],
+				});
+				lexer.tokens.push(Token::unit(unit));
 				lex_word_if_non_empty(other, lexer)?;
 				return Ok(());
 			}
@@ -2824,7 +2836,7 @@ mod tests {
 			"1150 revolutions per minute",
 			vec![
 				numtok!(1150),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::TextOperator(Per),
 				Token::unit(Minute),
 			],
@@ -2835,7 +2847,7 @@ mod tests {
 			"1 revolution per min",
 			vec![
 				numtok!(1),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::TextOperator(Per),
 				Token::unit(Minute),
 			],
@@ -2846,7 +2858,7 @@ mod tests {
 			"4 revolution / mins",
 			vec![
 				numtok!(4),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::Operator(Divide),
 				Token::unit(Minute),
 			],
@@ -2857,7 +2869,7 @@ mod tests {
 			"1250 r / min",
 			vec![
 				numtok!(1250),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::Operator(Divide),
 				Token::unit(Minute),
 			],
@@ -2868,7 +2880,7 @@ mod tests {
 			"1300 rev / min",
 			vec![
 				numtok!(1300),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::Operator(Divide),
 				Token::unit(Minute),
 			],
@@ -2879,7 +2891,7 @@ mod tests {
 			"1350 rev / minute",
 			vec![
 				numtok!(1350),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::Operator(Divide),
 				Token::unit(Minute),
 			],
@@ -2890,7 +2902,7 @@ mod tests {
 			"1250 r per min",
 			vec![
 				numtok!(1250),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::TextOperator(Per),
 				Token::unit(Minute),
 			],
@@ -2901,7 +2913,7 @@ mod tests {
 			"1300 rev per min",
 			vec![
 				numtok!(1300),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::TextOperator(Per),
 				Token::unit(Minute),
 			],
@@ -2912,7 +2924,7 @@ mod tests {
 			"1350 rev per minute",
 			vec![
 				numtok!(1350),
-				Token::LexerKeyword(Revolution),
+				Token::unit(Revolution),
 				Token::TextOperator(Per),
 				Token::unit(Minute),
 			],

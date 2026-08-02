@@ -178,9 +178,7 @@ match string {
   - Timezones
   - Binary/octal/decimal/hexadecimal/base32/base64
   - Color codes
-  - Force
   - Roman numerals
-  - Angles
 
 ### Releasing a new version
 

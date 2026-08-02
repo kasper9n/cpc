@@ -40,6 +40,8 @@ pub enum UnitType {
 	Force,
 	/// A unit of force, for example [`Hertz`]
 	Pressure,
+	/// A unit of angle, for example [`Degree`]
+	Angle,
 	/// A unit of frequency, for example [`Hertz`]
 	Frequency,
 	/// A unit of x, for example [`KilometersPerHour`]
@@ -68,6 +70,8 @@ impl UnitType {
 			Resistance => vec![(Meter, 2), (Kilogram, 1), (Second, -3), (Ampere, -2)],
 			Voltage => vec![(Meter, 2), (Kilogram, 1), (Second, -3), (Ampere, -1)],
 			Force => vec![(Meter, 1), (Kilogram, 1), (Second, -2)],
+			// In SI, angles are dimensionless. Wolfram Alpha does the same.
+			Angle => vec![],
 			Pressure => vec![(Kilogram, 1), (Second, -2), (Meter, -1)],
 			Frequency => vec![(Second, -1)],
 			Speed => vec![(Meter, 1), (Second, -1)],
@@ -81,6 +85,13 @@ impl UnitType {
 			sort_units(&mut u1);
 			assert!(u0 == u1)
 		}
+		units
+	}
+	fn primitive_strict(&self) -> Vec<(Unit, isize)> {
+		let units = match self {
+			Angle => vec![(Revolution, 1)],
+			_ => self.primitive(),
+		};
 		units
 	}
 }
@@ -120,6 +131,24 @@ pub fn primitive_unit(unit: &[(Unit, isize)]) -> Vec<(Unit, isize)> {
 	primitives
 }
 
+/// Primitive unit, but that keeps dimnsionless unit categories separate.
+/// So angles and unitless numbers are not considered equal.
+pub fn primitive_unit_strict(unit: &[(Unit, isize)]) -> Vec<(Unit, isize)> {
+	let mut primitives: Vec<(Unit, isize)> = Vec::new();
+	for (unit, exponent) in unit {
+		for (primitive, primitive_exponent) in unit.category().primitive_strict() {
+			let existing = primitives.iter_mut().find(|(u, _)| u == &primitive);
+			match existing {
+				Some(existing) => existing.1 += primitive_exponent * exponent,
+				None => primitives.push((primitive, primitive_exponent * exponent)),
+			}
+		}
+	}
+	primitives.retain(|(_, exponent)| exponent != &0);
+	sort_units(&mut primitives);
+	primitives
+}
+
 fn reduce_unit(number: Number) -> Number {
 	let mut new_unit: Vec<(Unit, isize)> = Vec::new();
 	for (unit, exponent) in &number.unit {
@@ -145,7 +174,6 @@ fn reduce_unit(number: Number) -> Number {
 macro_rules! create_units {
 	( $( $variant:ident : $properties:expr ),*, ) => {
 		#[derive(Clone, Copy, PartialEq, Debug, Eq, PartialOrd, Ord, Hash)]
-		/// A Unit enum. Note that it can also be [`NoUnit`].
 		pub enum Unit {
 			Ambiguity(Ambiguity),
 			$($variant),*
@@ -426,13 +454,23 @@ create_units!(
 	PoundsPerSquareInch:          (Pressure, inexact!(8896443230521/1290320000), "pound per square inch", "pounds per square inch"),
 	Torr:                         (Pressure, inexact!(4053000 / 30400), "torr", "torr"),
 
+	// Gets the inexact flag because of the division
+	Radian:                       (Angle, 1 / D128::TAU, "radian", "radians"),
+	Degree:                       (Angle, inexact!(1/360), "degree", "degrees"),
+	Arcminute:                    (Angle, inexact!(1/21600), "arcminute", "arcminutes"),
+	Arcsecond:                    (Angle, inexact!(1/1296000), "arcsecond", "arcseconds"),
+	Gradian:                      (Angle, d!(1) / d!(400), "gradian", "gradians"),
+	Milliradian:                  (Angle, 1 / (d!(1000) * D128::TAU), "milliradian", "milliradians"),
+	Turn:                         (Angle, d!(1), "turn", "turns"),
+	Revolution:                   (Angle, d!(1), "revolution", "revolutions"),
+
+	RevolutionsPerMinute:         (Frequency, inexact!(1/60), "revolution per minute", "revolutions per minute"),
 	Hertz:                        (Frequency, d!(1), "hertz", "hertz"),
 	Kilohertz:                    (Frequency, d!(1000), "kilohertz", "kilohertz"),
 	Megahertz:                    (Frequency, d!(1000000), "megahertz", "megahertz"),
 	Gigahertz:                    (Frequency, d!(1000000000), "gigahertz", "gigahertz"),
 	Terahertz:                    (Frequency, d!(1000000000000), "terahertz", "terahertz"),
 	Petahertz:                    (Frequency, d!(1000000000000000), "petahertz", "petahertz"),
-	RevolutionsPerMinute:         (Frequency, d!(60), "revolution per minute", "revolutions per minute"),
 
 	KilometersPerHour:  (Speed, inexact!(1 / 3.6), "kilometer per hour", "kilometers per hour"),
 	MetersPerSecond:    (Speed, d!(1), "meter per second", "meters per second"),
@@ -717,10 +755,11 @@ pub fn convert(number: Number, to_unit: Vec<(Unit, isize)>) -> Result<Number, St
 		let source_weight = combined_weight(&number.unit);
 		let target_weight = combined_weight(&to_unit);
 
-		Ok(Number {
+		let result = Number {
 			value: number.value * source_weight / target_weight,
 			unit: to_unit.to_vec(),
-		})
+		};
+		Ok(result)
 	}
 }
 
@@ -729,7 +768,8 @@ pub fn convert(number: Number, to_unit: Vec<(Unit, isize)>) -> Result<Number, St
 pub fn convert_to_lowest(left: Number, right: Number) -> Result<(Number, Number), String> {
 	assert!(left.primitive_unit() == right.primitive_unit());
 	if combined_weight(&left.unit) == combined_weight(&right.unit) {
-		Ok((left, right))
+		let right_converted = convert(right, left.unit.clone())?;
+		Ok((left, right_converted))
 	} else if combined_weight(&left.unit) > combined_weight(&right.unit) {
 		let left_converted = convert(left, right.unit.clone())?;
 		Ok((left_converted, right))
@@ -743,7 +783,7 @@ pub fn convert_to_lowest(left: Number, right: Number) -> Result<(Number, Number)
 pub fn add(left: Number, right: Number) -> Result<Number, String> {
 	if left.unit == right.unit {
 		Ok(Number::with_unit(left.value + right.value, left.unit))
-	} else if left.primitive_unit() == right.primitive_unit()
+	} else if left.primitive_strict() == right.primitive_strict()
 		&& !left.contains_category(Temperature)
 	{
 		let (left, right) = convert_to_lowest(left, right)?;
@@ -757,7 +797,7 @@ pub fn add(left: Number, right: Number) -> Result<Number, String> {
 pub fn subtract(left: Number, right: Number) -> Result<Number, String> {
 	if left.unit == right.unit {
 		Ok(Number::with_unit(left.value - right.value, left.unit))
-	} else if left.primitive_unit() == right.primitive_unit()
+	} else if left.primitive_strict() == right.primitive_strict()
 		&& !left.contains_category(Temperature)
 	{
 		let (left, right) = convert_to_lowest(left, right)?;
@@ -1018,7 +1058,7 @@ pub fn divide_any(left: Number, right: Number) -> Result<Number, String> {
 pub fn modulo(left: Number, right: Number) -> Result<Number, String> {
 	if left.contains_category(Temperature) || right.contains_category(Temperature) {
 		Err(format!("Cannot modulo {} by {}", left, right))
-	} else if left.primitive_unit() == right.primitive_unit() {
+	} else if left.primitive_strict() == right.primitive_strict() {
 		// 5 km % 3 m
 		let (left, right) = convert_to_lowest(left, right)?;
 		Ok(Number::with_unit(left.value % right.value, left.unit))
@@ -1437,12 +1477,12 @@ mod tests {
 			1.0
 		);
 
+		assert_float_eq!(convert_test(60.0, RevolutionsPerMinute, Hertz), 1.0);
 		assert_float_eq!(convert_test(1000.0, Hertz, Kilohertz), 1.0);
 		assert_float_eq!(convert_test(1000.0, Kilohertz, Megahertz), 1.0);
 		assert_float_eq!(convert_test(1000.0, Megahertz, Gigahertz), 1.0);
 		assert_float_eq!(convert_test(1000.0, Gigahertz, Terahertz), 1.0);
 		assert_float_eq!(convert_test(1000.0, Terahertz, Petahertz), 1.0);
-		assert_float_eq!(convert_test(60.0, Hertz, RevolutionsPerMinute), 1.0);
 
 		// assert_float_eq!(convert_test(3.6, KilometersPerHour, MetersPerSecond), 1.0);
 		assert_float_eq!(convert_test(0.3048, MetersPerSecond, FeetPerSecond), 1.0);

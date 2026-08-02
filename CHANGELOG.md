@@ -1,12 +1,14 @@
 # Changelog
 
 ## Next
-- Add units of force
+- Add units of force, like `newton`
+- Add units of angle, like `revolution`. `degree` still defaults to temperature, but it works in angle contexts, like `degree to revolution`
 - Parse `kN` as `kilonewton` instead of `knot` if the N is uppercase
 - Add REPL to the `cpc` CLI
 - Add support for numbers with thousands separators `_`, ` ` and ` ` (thin space)
 - Format numbers with thousands separator
 - Fix units incorrectly being displayed with a negative exponent, like `1 meter / second^-2`
+- Fix `rpm` support
 - Fix parsing of `inch of mercury`
 
 ## 4.2.0 - 2026 Jul 1

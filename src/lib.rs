@@ -22,7 +22,7 @@
 //! }
 //! ```
 
-use crate::units::{Unit, UnitType, primitive_unit, sort_units};
+use crate::units::{Unit, UnitType, primitive_unit, primitive_unit_strict, sort_units};
 use fastnum::{D128, dec128 as d};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -87,6 +87,9 @@ impl Number {
 	}
 	pub fn primitive_unit(&self) -> Vec<(Unit, isize)> {
 		primitive_unit(&self.unit)
+	}
+	pub fn primitive_strict(&self) -> Vec<(Unit, isize)> {
+		primitive_unit_strict(&self.unit)
 	}
 	pub fn contains_category(&self, category: UnitType) -> bool {
 		self.unit.iter().any(|(u, _)| u.category() == category)
@@ -303,7 +306,6 @@ pub enum FunctionIdentifier {
 pub enum LexerKeyword {
 	PercentChar,
 	In,
-	Revolution,
 }
 
 #[derive(Clone, PartialEq)]
