@@ -58,12 +58,15 @@ round(sqrt(2)^4)! liters
 
 ## Supported unit types
 - Normal numbers
+- Angle
 - Area
 - Currency
+- Data transfer rate
 - Digital storage (bytes etc)
 - Electric current
 - Energy
 - FLOPS
+- Force
 - Frequency
 - Length
 - Mass
